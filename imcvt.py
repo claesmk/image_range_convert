@@ -5,11 +5,30 @@ import os
 import sys
 
 
-def convert_image(image: np.ndarray, new_max: int, new_min: int, old_max: int, old_min: int) -> np.ndarray:
-    """Convert the image from old range to new range"""
-    # warn if any values are outside the old range
-    if image.min() < old_min or image.max() > old_max:
-        print(f'WARNING: Values outside ({old_min}-{old_max}) will be clipped')
+def convert_image(image: np.ndarray,
+                  new_max: int, new_min: int, old_max: int, old_min: int,
+                  show_warning: bool = True) -> np.ndarray:
+    """
+    Convert the image from old range to new range
+
+    Args:
+        image: image to convert
+        new_max: new maximum value (255 full, 235 limited)
+        new_min: new minimum value (0 full, 16 limited)
+        old_max: old maximum value (255 full, 235 limited)
+        old_min: old minimum value (0 full, 16 limited)
+        show_warning: show a warning if any values are outside the old range
+
+    Examples:
+        Convert from full range to limited range:
+          convert_image(image, 235, 16, 255, 0)
+
+        Convert from limited range to full range:
+          convert_image(image, 255, 0, 235, 16)
+    """
+    # warn if any old values are outside the old range
+    if (image.min() < old_min or image.max() > old_max) and show_warning:
+        print(f'  WARNING: Image contains values outside ({old_min}-{old_max}) which will be clipped')
 
     # clip image to old range
     image = image.clip(old_min, old_max).astype('uint8')
@@ -18,6 +37,9 @@ def convert_image(image: np.ndarray, new_max: int, new_min: int, old_max: int, o
     image = ((image - old_min) * ((new_max - new_min) / (old_max - old_min))) + new_min
 
     # clip image to new range
+    # warn if any new values are outside the new range
+    if (image.min() < new_min or image.max() > new_max) and show_warning:
+        print(f'  WARNING: New values outside ({new_min}-{new_max}) will be clipped')
     return image.clip(new_min, new_max).astype('uint8')
 
 
@@ -42,8 +64,11 @@ def convert_image_file(file_name: str, convert_to: str, use_subdir: bool = False
     path, name = os.path.split(file_name)
     # get the image extension
     name, ext = os.path.splitext(name)
-    # get the new file name
+    # get the new file name suffix _full.ext or _limited.ext
     new_name = name+'_'+convert_to+ext
+
+    # print the file name
+    print(file_name)
 
     # if the use_subdir param is True, create a subdirectory for the converted images
     if use_subdir:
@@ -51,16 +76,16 @@ def convert_image_file(file_name: str, convert_to: str, use_subdir: bool = False
         # create the subdirectory if it does not exist
         if not os.path.exists(new_path):
             os.mkdir(new_path)
-        # add the subdirectory to the file name
+        # add the subdirectory to the new file name
         new_file_name = os.path.join(new_path, new_name)
     else:
-        # get the new file name
+        # get the new file name the same path
         new_file_name = os.path.join(path, new_name)
     # If the image already exists skip it
     if os.path.isfile(new_file_name):
-        print(f'Skipping {file_name}')
+        print(f'  Skipping because {new_file_name} already exists')
         return
-    print('Converting ' + file_name)
+    print('  Converting to ' + new_file_name)
 
     # read the image
     image = cv2.imread(file_name)
@@ -101,7 +126,9 @@ def find_images():
             if selection == 'y':
                 # Convert images
                 for file_name in os.listdir(images_dir):
+                    # skip any hidden files
                     if not file_name.startswith('.'):
+                        # only convert jpg and png files
                         if file_name.endswith('.jpg') or file_name.endswith('.png'):
                             convert_image_file(os.path.join(images_dir, file_name),
                                                convert_to='full', use_subdir=True)
