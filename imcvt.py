@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import os
 import sys
+import glob
 
 
 def convert_image(image: np.ndarray,
@@ -60,10 +61,23 @@ def convert_image_file(file_name: str, convert_to: str, use_subdir: bool = False
         print('Invalid argument: ' + convert_to)
         return
 
+    # Make sure the file exists
+    if not os.path.isfile(file_name):
+        print(f'File does not exist: {file_name}')
+        return
+
     # get the directory and file name
     path, name = os.path.split(file_name)
     # get the image extension
     name, ext = os.path.splitext(name)
+
+    # It's possible a file could be legitimately named _full.ext or _limited.ext
+    # However, for the purpose of this script, we will assume that if this is true
+    # we will skip trying to convert it
+    if name.endswith('_full') or name.endswith('_limited'):
+        print(f'  Skipping {file_name} because it ends with _full or _limited')
+        return
+
     # get the new file name suffix _full.ext or _limited.ext
     new_name = name+'_'+convert_to+ext
 
@@ -149,7 +163,14 @@ if __name__ == '__main__':
     # if less than one argument is given, print usage
     if len(sys.argv) < 2:
         find_images()
+    elif len(sys.argv) > 2:
+        # if glob pattern is given, convert all matching files
+        if '*' in sys.argv[2]:
+            for file in glob.glob(sys.argv[2]):
+                convert_image_file(file, sys.argv[1])
+        else:
+            for file in sys.argv[2:]:
+                convert_image_file(file, sys.argv[1])
     else:
-        # Convert all the files listed on the command line to the specified range
-        for file in sys.argv[2:]:
-            convert_image_file(file, sys.argv[1])
+        # print usage
+        print('Usage: ' + sys.argv[0] + ' [full|limited] [file1] [file2] ...')
