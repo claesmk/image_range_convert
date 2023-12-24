@@ -11,7 +11,7 @@ Git is also required for macOS.  If you do not have Git installed, you can downl
 from [Git Downloads](https://git-scm.com/downloads).  Use the default options when installing.
 
 Once Anaconda and Git are installed, open a new terminal window.  You should see the (base) prefix in
-the terminal prompt which indicates you are uins the Anaconda Python environment, for example:
+the terminal prompt which indicates you are using the Anaconda Python environment, for example:
 ```bash
 (base) MacBook-Pro:~ user%
 ```
