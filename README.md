@@ -23,7 +23,7 @@ cd image_range_convert
 pip install -r requirements.txt
 ```
 
-You can then insert an SD card containing images into your computer and execute the following command:
+You can then insert a SD card or USB drive containing images into your computer and execute the following command:
 
 ```bash
 python imcvt.py
