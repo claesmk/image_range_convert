@@ -27,18 +27,26 @@ def convert_image(image: np.ndarray,
         Convert from limited range to full range:
           convert_image(image, 255, 0, 235, 16)
     """
-    # warn if any old values are outside the old range
+    # raise an error if the image is not uint8
+    if image.dtype != 'uint8':
+        raise TypeError('Currently only 8-bit images are supported')
+
+    # Warn if any old values are outside the old range.  This should only happen when the input image
+    # is supposed to be limited range but contains values outside 16-235 (sub-black or super-white)
     if (image.min() < old_min or image.max() > old_max) and show_warning:
         print(f'  WARNING: Image contains values outside ({old_min}-{old_max}) which will be clipped')
 
-    # clip image to old range
+    # Clip the image to the expected range to prevent overflow since dtype is uint8
     image = image.clip(old_min, old_max).astype('uint8')
 
     # convert the image from old range to new range
     image = ((image - old_min) * ((new_max - new_min) / (old_max - old_min))) + new_min
 
-    # clip image to new range
-    # warn if any new values are outside the new range
+    # round to nearest int to improve conversion accuracy
+    image = np.rint(image).astype('uint8')
+
+    # This check should not be necessary since the input image was clipped.  Performing another
+    # check here as a safety precaution to prevent out-of-range values
     if (image.min() < new_min or image.max() > new_max) and show_warning:
         print(f'  WARNING: New values outside ({new_min}-{new_max}) will be clipped')
     return image.clip(new_min, new_max).astype('uint8')
@@ -108,8 +116,11 @@ def convert_image_file(file_name: str, convert_to: str, use_subdir: bool = False
         converted_image = limited_to_full(image)
     else:
         converted_image = full_to_limited(image)
-    # save the image
-    cv2.imwrite(new_file_name, converted_image)
+    # save the image.  If this is a jpg image don't compress it
+    if ext.lower() == '.jpg':
+        cv2.imwrite(new_file_name, converted_image, [cv2.IMWRITE_JPEG_QUALITY, 100])
+    else:
+        cv2.imwrite(new_file_name, converted_image)
 
 
 def find_images():
