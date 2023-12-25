@@ -1,0 +1,8 @@
+[FORMAT]
+# Make max-line-length consistent with IntelliJ default
+max-line-length=120
+
+[TYPECHECK]
+# This is a common issue with Pylint and OpenCV, because OpenCV is a C/C++ library with
+# Python bindings, and Pylint can have trouble understanding these bindings.
+ignored-modules=cv2

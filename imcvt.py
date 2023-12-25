@@ -1,4 +1,13 @@
-"""Converts images between full range (0-255) and limited range (16-235)"""
+"""
+Converts images from full to limited range or limited to full range based on command line arguments.
+If no arguments are given, a brief help message is printed and the program will attempt to locate
+files in an IMAGES folder and covert them from limited to full range if they have not already been
+converted.
+
+Usage:
+    imcvt.py
+    imcvt.py [full|limited] [file1] [file2] ...
+"""
 import os
 import sys
 import glob
@@ -6,6 +15,9 @@ import numpy as np
 import cv2
 
 
+# convert_image was written this way to better handle future cases such as SMPTE+ 16-255
+# new/old min/max provides this flexibility but pylint doesn't like it
+# pylint: disable=too-many-arguments
 def convert_image(image: np.ndarray,
                   new_max: int, new_min: int, old_max: int, old_min: int,
                   show_warning: bool = True) -> np.ndarray:
@@ -50,6 +62,7 @@ def convert_image(image: np.ndarray,
     if (image.min() < new_min or image.max() > new_max) and show_warning:
         print(f'  WARNING: New values outside ({new_min}-{new_max}) will be clipped')
     return image.clip(new_min, new_max).astype('uint8')
+# pylint: enable=too-many-arguments
 
 
 def full_to_limited(image: np.ndarray) -> np.ndarray:
@@ -165,16 +178,6 @@ def find_images():
 
 
 if __name__ == '__main__':
-    """
-    Converts images from full to limited range or limited to full range based on command line arguments.
-    If no arguments are given, a brief help message is printed and the program will attempt to locate 
-    files in an IMAGES folder and covert them from limited to full range if they have not already been
-    converted.
-    
-    Usage: 
-        imcvt.py 
-        imcvt.py [full|limited] [file1] [file2] ...
-    """
     # if less than one argument is given, print usage
     if len(sys.argv) < 2:
         find_images()
