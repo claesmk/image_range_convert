@@ -1,7 +1,7 @@
 import unittest
-import cv2
-import numpy as np
 import os
+import numpy as np
+import cv2
 from imcvt import limited_to_full, full_to_limited
 
 

@@ -1,9 +1,9 @@
 """Converts images between full range (0-255) and limited range (16-235)"""
-import cv2
-import numpy as np
 import os
 import sys
 import glob
+import numpy as np
+import cv2
 
 
 def convert_image(image: np.ndarray,
@@ -116,11 +116,32 @@ def convert_image_file(file_name: str, convert_to: str, use_subdir: bool = False
         converted_image = limited_to_full(image)
     else:
         converted_image = full_to_limited(image)
-    # save the image.  If this is a jpg image don't compress it
-    if ext.lower() == '.jpg':
-        cv2.imwrite(new_file_name, converted_image, [cv2.IMWRITE_JPEG_QUALITY, 100])
-    else:
-        cv2.imwrite(new_file_name, converted_image)
+
+    # save the image
+    cv2.imwrite(new_file_name, converted_image)
+
+
+def process_images_folder(images_dir: str):
+    """Prompts the user to convert images in the specified directory"""
+
+    print(f'Found IMAGES folder at {images_dir}')
+    # Prompt the user to convert images
+    while True:
+        try:
+            selection = input('Convert images? [y/n]: ').lower()
+            assert selection in ['y', 'n']
+            break
+        except (ValueError, AssertionError):
+            print('Invalid selection')
+    if selection == 'y':
+        # Convert images
+        for file_name in os.listdir(images_dir):
+            # skip any hidden files
+            if not file_name.startswith('.'):
+                # only convert jpg and png files
+                if file_name.endswith('.jpg') or file_name.endswith('.png'):
+                    convert_image_file(os.path.join(images_dir, file_name),
+                                       convert_to='full', use_subdir=True)
 
 
 def find_images():
@@ -139,25 +160,8 @@ def find_images():
     for volume in volumes:
         images_dir = os.path.join('/Volumes', volume, 'IMAGES')
         if os.path.isdir(images_dir):
-            print(f'Found IMAGES folder at {images_dir}')
-            # Prompt the user to convert images
-            while True:
-                try:
-                    selection = input('Convert images? [y/n]: ').lower()
-                    assert selection in ['y', 'n']
-                    break
-                except (ValueError, AssertionError):
-                    print('Invalid selection')
-            if selection == 'y':
-                # Convert images
-                for file_name in os.listdir(images_dir):
-                    # skip any hidden files
-                    if not file_name.startswith('.'):
-                        # only convert jpg and png files
-                        if file_name.endswith('.jpg') or file_name.endswith('.png'):
-                            convert_image_file(os.path.join(images_dir, file_name),
-                                               convert_to='full', use_subdir=True)
-            break
+            process_images_folder(images_dir)
+            return
 
 
 if __name__ == '__main__':
